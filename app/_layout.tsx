@@ -9,11 +9,11 @@ import {
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
-import { useColorScheme } from '@/components/useColorScheme';
-import { Slot, usePathname } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import { Slot, usePathname, useRouter } from 'expo-router';
 import { Fab, FabIcon } from '@/components/ui/fab';
 import { MoonIcon, SunIcon } from '@/components/ui/icon';
+import AuthProvider from '@/src/context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -27,8 +27,9 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  const [styleLoaded, setStyleLoaded] = useState(false);
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
@@ -39,6 +40,22 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
+
+  useEffect(() => {
+    const checkAuthToken = async () => {
+      const token = await AsyncStorage.getItem('token');
+      // console.log("token", token);
+
+      if(token){
+        router.replace('/(postLogin)');
+      }else{
+        router.replace
+      }
+    }
+
+    checkAuthToken();
+  }, [])
+
   return <RootLayoutNav />;
 }
 
@@ -49,18 +66,20 @@ function RootLayoutNav() {
   return (
     <GluestackUIProvider mode={colorMode}>
       <ThemeProvider value={colorMode === 'dark' ? DarkTheme : DefaultTheme}>
-        <Slot />
-        {pathname === '/' && (
-          <Fab
-            onPress={() =>
-              setColorMode(colorMode === 'dark' ? 'light' : 'dark')
-            }
-            className="m-6"
-            size="lg"
-          >
-            <FabIcon as={colorMode === 'dark' ? MoonIcon : SunIcon} />
-          </Fab>
-        )}
+          <AuthProvider>
+            <Slot />
+            {pathname === '/' && (
+              <Fab
+                onPress={() =>
+                  setColorMode(colorMode === 'dark' ? 'light' : 'dark')
+                }
+                className="m-6"
+                size="lg"
+              >
+                <FabIcon as={colorMode === 'dark' ? MoonIcon : SunIcon} />
+              </Fab>
+            )}
+          </AuthProvider>
       </ThemeProvider>
     </GluestackUIProvider>
   );
