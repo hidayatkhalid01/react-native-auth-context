@@ -11,10 +11,12 @@ npm install
 ```
 
 ## How to start
+1. Run ```npx expo start```
+2. The QR code will appear in the terminal. Make sure you are connected to the same wifi network for laptop and mobile.
+3. Scan the QR code using camera (IOS) or Expo Go app (Android).
+4. Now you can access the app.
 
-```bash
-npx expo start
-```
+Reference: [Expo Documentation](https://docs.expo.dev/guides/overview/)
 ## Feature
 1. A simple and straightforward **Authentication feature** which includes validation.
 2. Saving the token to **Async Storage** for security and easy to log in when refreshing the app.
