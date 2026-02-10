@@ -8,8 +8,8 @@ import {
 } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
-import { Slot, usePathname, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { Slot, usePathname, useRootNavigationState, useRouter } from 'expo-router';
 import { Fab, FabIcon } from '@/components/ui/fab';
 import { MoonIcon, SunIcon } from '@/components/ui/icon';
 import AuthProvider from '@/src/context/AuthContext';
@@ -27,8 +27,9 @@ export default function RootLayout() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
-  const [loading, setLoading] = useState(true);
+
   const router = useRouter();
+  const navigationState = useRootNavigationState();
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
@@ -41,20 +42,17 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  useEffect(() => {
-    const checkAuthToken = async () => {
+  const checkAuthToken = useCallback(async () => {
       const token = await AsyncStorage.getItem('token');
-      // console.log("token", token);
+      
+      router.replace(token ? '/(postLogin)' : '/login');
+  }, [])
 
-      if(token){
-        router.replace('/(postLogin)');
-      }else{
-        router.replace
-      }
-    }
+  useEffect(() => {
+    if(!navigationState.key) return;
 
     checkAuthToken();
-  }, [])
+  }, [navigationState?.key, checkAuthToken])
 
   return <RootLayoutNav />;
 }

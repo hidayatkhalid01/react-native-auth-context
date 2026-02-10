@@ -20,6 +20,8 @@ Reference: [Expo Documentation](https://docs.expo.dev/guides/overview/)
 ## Feature
 1. A simple and straightforward **Authentication feature** which includes validation.
 2. Saving the token to **Async Storage** for security and easy to log in when refreshing the app.
+3. The use of **Design Token** by Tailwindcss to make the UI look consistent and systematic throughout the app 
+4. Theme change (Light & Dark) enabled.
 
 ## Usage
 1. **Log In** - Use email as (admin@test.com) and password as (admin1234)

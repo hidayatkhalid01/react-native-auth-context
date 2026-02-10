@@ -9,12 +9,14 @@ interface AuthContextProps {
     signIn: (email: string, password: string) => Promise<any>;
     signOut: () => Promise<void>;
     register: (name: string, phone: string, email: string, password: string) => Promise<any>;
+    fetchUser: () => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextProps>({
     signIn: async () => { },
     signOut: async () => { },
     register: async () => { },
+    fetchUser: async () => { },
     isLoading: false,
     user: null
 });
@@ -33,12 +35,24 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | undefined>();
     const [isLoading, setIsLoading] = useState<boolean>(false);
     
-    // function to login
-    // need to pass success, message, data (DONE)
-    // need to save data to async storage for expo (DONE)
-    // will navigate to home page (DONE)
-    // to mock login api (DONE)
-    // api should pass id, email, name, avatar, token (DONE)
+    
+    /**
+     * notes: 
+     * function to login
+     * need to pass success, message, data (DONE)
+     * need to save data to async storage for expo (DONE)
+     * will navigate to home page (DONE)
+     * to mock login api (DONE)
+     * api should pass id, email, name, avatar, token (DONE)
+     * 
+     * Signs in a user with given email and password.
+     * If the sign in is successful, it will store the token and user data in AsyncStorage.
+     * Then it will set the user state to the signed in user and navigate to "/(postLogin)".
+     * If there is an error, it will return a response with success false and a message with the error.
+     * @param {string} email - The email of the user.
+     * @param {string} password - The password of the user.
+     * @returns {Promise<{success: boolean, message: string, user?: {id: number, name: string, email: string}>>}
+     */
     const signIn = async (email: string, password: string) => {
         setIsLoading(true);
         try {
@@ -65,8 +79,11 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
-    // to remove async storage token 
-    // navigate to login page (done)
+    /**
+     * Signs out a user by removing the token and user from async storage.
+     * Then navigates to the login page.
+     * @returns {Promise<void>} - A promise that resolves when the user is signed out.
+     */
     const signOut = async () => {
         setUser(undefined);
         await AsyncStorage.removeItem('token');
@@ -74,7 +91,16 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push('/login');
     }
 
-
+    /**
+     * Registers a user with name, phone, email and password.
+     * 
+     * @param {string} name - The name of the user.
+     * @param {string} phone - The phone number of the user.
+     * @param {string} email - The email of the user.
+     * @param {string} password - The password of the user.
+     * 
+     * @returns {Promise<{success: boolean, message: string, user?: {id: number, name: string, email: string}>>}
+     */
     const register = async (name: string, phone: string, email: string, password: string) => {
         try{
             setIsLoading(true);
@@ -103,11 +129,48 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
 
+    /**
+     * Fetches the user from AsyncStorage based on the token.
+     * If the token is "mock-jwt-token", it will return the user with id 1234, name "Admin" and email "admin@test.com".
+     * If the token is "mock-jwt-token-1", it will return the user with id 1235, name "Admin 2" and email "admin2@test.com".
+     * 
+     * @returns {Promise<{success: boolean, user?: {id: number, name: string, email: string}>>}
+     */
+    const fetchUser = async () => {
+        const token = await AsyncStorage.getItem('token');
+        if(token){
+            if(token === 'mock-jwt-token'){
+                const user = {
+                    id: 1234,
+                    name: "Admin",
+                    email: "admin@test.com"
+                }
+                setUser(user);
+                return {
+                    success: true,
+                    user: user
+                }
+            }else if(token === 'mock-jwt-token-1'){
+                const user = {
+                    id: 1235,
+                    name: "Admin 2",
+                    email: "admin2@test.com"
+                }
+                setUser(user);
+                return {
+                    success: true,
+                    user: user
+                }
+            }
+        }
+    }
+
     return (
         <AuthContext.Provider value={{
             signIn,
             signOut,
             register,
+            fetchUser,
             user,
             isLoading,
         }}

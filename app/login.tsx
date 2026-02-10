@@ -6,9 +6,11 @@ import { AlertCircleIcon, ArrowLeftIcon, EyeIcon, EyeOffIcon } from "@/component
 import { router } from "expo-router";
 import { FormControl, FormControlError, FormControlErrorIcon, FormControlErrorText, FormControlLabel, FormControlLabelText } from "@/components/ui/form-control";
 import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useAuth } from "@/src/context/AuthContext";
-import AntDesign from '@expo/vector-icons/AntDesign';
+
+import { Keyboard } from "react-native";
+import { isValidEmail } from "@/src/helpers/ValidateEmail";
 
 export default function LoginPage() {
     const [email, setEmail] = useState<string>('');
@@ -23,52 +25,55 @@ export default function LoginPage() {
         invalid?: string;
     }>({});
 
-    const isValidEmail = (email: string): boolean => {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    };
-
     // need to mimic Login API
     // will navigate to postlogin if success
     // will show error if failed
     // do validation here
-    const handleLogin = async () => {
+    // implement useCallback 
+    const handleLogin = useCallback(async () => {
+        const newErrors: Record<string, string> = {};
         if (email.length === 0) {
-            setErrors({ email: 'Email is required' });
-            return;
-        }
-
-        if(!isValidEmail(email)){
-            setErrors({ email: 'Email must be a valid email and has no whitespace' });
-            return;
+            newErrors.email = 'Email is required';
+        }else if(!isValidEmail(email)){
+            newErrors.email = "Email must be a valid email address";    
         }
 
         if (password.length < 6) {
-            setErrors({ password: 'Password must be at least 6 characters' });
+            newErrors.password = "Password must be at least 6 characters";
+        }
+        
+        if(Object.keys(newErrors).length > 0){
+            setErrors(newErrors);
             return;
         }
 
         setErrors({});
-        const result = await signIn(email, password);
-
-        if (!result.success) {
-            setErrors({ invalid: result.message });
+        try{
+            const result = await signIn(email, password);
+            Keyboard.dismiss();
+            if (!result.success) {
+                setErrors({ invalid: result.message });
+            }
+        }catch(err: any){
+            setErrors({ invalid: err?.message ?? "Something went wrong" });
         }
-    }
+    }, [email, password, signIn]);
+
     return (
-        <SafeAreaView className='bg-white flex flex-1 p-5'>
+        <SafeAreaView className='bg-background-800 flex flex-1 p-5'>
 
             <Box className="flex flex-col gap-2">
                  {/* top - for back button */}
                 <Box className="flex ">
-                    <Button className="rounded-full bg-background-100p-3 w-12" size="lg" onPress={() => router.dismissTo('/')}>
-                        <ButtonIcon as={ArrowLeftIcon} color="black" />
+                    <Button variant="outline" className="rounded-full border-secondary-500 p-3 w-12" size="lg" onPress={() => router.dismissTo('/')}>
+                        <ButtonIcon as={ArrowLeftIcon} className="text-secondary-500" />
                     </Button>
                 </Box>
 
                 {/* text */}
                 <Box className="mb-5">
-                    <Text className="font-black text-7xl">Lets sign you in!</Text>
-                    <Text className="text-3xl">Welcome back</Text>
+                    <Text className="font-black text-secondary-500 text-7xl">Lets sign you in!</Text>
+                    <Text className="text-3xl text-secondary-500">Welcome back</Text>
                 </Box>
             </Box>
 
@@ -76,10 +81,10 @@ export default function LoginPage() {
             <Box className="w-full flex flex-col gap-2">
                 <FormControl isInvalid={!!errors.email || !!errors.invalid} isRequired>
                     <FormControlLabel>
-                        <FormControlLabelText>Email Address</FormControlLabelText>
+                        <FormControlLabelText className="text-secondary-500">Email Address</FormControlLabelText>
                     </FormControlLabel>
                     <Input className="my-1" size="lg">
-                        <InputField placeholder="Enter your email" type="text" value={email} onChangeText={setEmail} />
+                        <InputField placeholder="Enter your email" className="text-secondary-500" type="text" value={email} onChangeText={setEmail} />
                     </Input>
                     <FormControlError>
                         <FormControlErrorIcon as={AlertCircleIcon} className="text-red-500" />
@@ -91,10 +96,10 @@ export default function LoginPage() {
 
                 <FormControl isInvalid={!!errors.password || !!errors.invalid} isRequired>
                     <FormControlLabel>
-                        <FormControlLabelText>Password</FormControlLabelText>
+                        <FormControlLabelText className="text-secondary-500">Password</FormControlLabelText>
                     </FormControlLabel>
                     <Input className="my-1" size="lg">
-                        <InputField type={showPassword ? 'text' : 'password'} placeholder="Enter your Password" value={password} onChangeText={setPassword} className="border-pink-500" />
+                        <InputField type={showPassword ? 'text' : 'password'} placeholder="Enter your Password" value={password} onChangeText={setPassword} className="text-secondary-500"  />
                         <InputSlot className="pr-3" onPress={() => setShowPassword(!showPassword)}>
                             <InputIcon as={showPassword ? EyeOffIcon : EyeIcon} />
                         </InputSlot>
@@ -107,25 +112,22 @@ export default function LoginPage() {
                     </FormControlError>
                 </FormControl>
 
-                <Button onPress={handleLogin} isDisabled={isLoading}>
+                <Button onPress={handleLogin} isDisabled={isLoading} className="bg-primary-500">
                     {isLoading && <ButtonSpinner color="gray" />}
                     <ButtonText>Sign In</ButtonText>
                 </Button>
 
                 <Box className="flex items-center justify-center relative">
-                    <Text className="bg-white z-10 px-2">Or sign in with</Text>
+                    <Text className="bg-background-800 z-10 px-2 text-secondary-500">Or sign in with</Text>
                     <Box className="absolute left-0 right-0 bg-background-500 h-0.5 z-0">
                     </Box>
                 </Box>
 
-                <Button className="bg-white" variant="outline">
-                    <ButtonIcon>
-                        <AntDesign name="google" size={24} color="#fff" />
-                    </ButtonIcon>
-                    <ButtonText>Continue with Google</ButtonText>
+                <Button className="border-secondary-500" variant="outline">
+                    <ButtonText className="text-secondary-500">Continue with Google</ButtonText>
                 </Button>
 
-                <Text className="text-center">Don't have an account? <Text className="text-info-500 font-semibold" onPress={() => router.push('/signup')}>Sign Up</Text></Text>
+                <Text className="text-center text-secondary-500">Don't have an account? <Text className="text-info-500 font-semibold" onPress={() => router.push('/signup')}>Sign Up</Text></Text>
             </Box>
         </SafeAreaView>
     )
